@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Historia operacji</title>
+</head>
+<body>
+    <h1>Historia operacji</h1>
+    <ul>
+    {% for i, entry in enumerate(historia) %}
+        <li>{{ i }}: {{ entry }}</li>
+    {% endfor %}
+    </ul>
+    <p><a href="{{ url_for('index') }}">Powrót do strony głównej</a></p>
+</body>
+</html>
