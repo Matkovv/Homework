@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Magazyn i Księgowość</title>
+</head>
+<body>
+    <h1>Stan magazynu i konto</h1>
+    <p>Aktualny stan konta: {{ konto }} PLN</p>
+
+    <h2>Stan magazynu</h2>
+    {% if magazyn %}
+        <ul>
+        {% for produkt, dane in magazyn.items() %}
+            <li>{{ produkt }}: {{ dane['ilosc'] }} szt. (Cena: {{ dane['cena'] }} PLN)</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Magazyn jest pusty.</p>
+    {% endif %}
+
+    <h2>Zakup</h2>
+    <form method="POST" action="{{ url_for('zakup') }}">
+        <input type="text" name="produkt" placeholder="Nazwa produktu" required>
+        <input type="number" name="cena" placeholder="Cena jednostkowa" required>
+        <input type="number" name="ilosc" placeholder="Liczba sztuk" required>
+        <button type="submit">Kup</button>
+    </form>
+
+    <h2>Sprzedaż</h2>
+    <form method="POST" action="{{ url_for('sprzedaz') }}">
+        <input type="text" name="produkt" placeholder="Nazwa produktu" required>
+        <input type="number" name="ilosc" placeholder="Liczba sztuk" required>
+        <button type="submit">Sprzedaj</button>
+    </form>
+
+    <h2>Zmiana salda</h2>
+    <form method="POST" action="{{ url_for('saldo') }}">
+        <input type="number" name="kwota" placeholder="Kwota" required>
+        <button type="submit">Zmień saldo</button>
+    </form>
+
+    <p><a href="{{ url_for('historia') }}">Zobacz historię operacji</a></p>
+</body>
+</html>
