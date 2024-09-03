@@ -13,7 +13,6 @@ class WeatherForecast:
         try:
             with open(file_path, 'r') as f:
                 self._forecasts = json.load(f)
-            # Convert string dates back to datetime objects if necessary
             self._forecasts = {datetime.strptime(k, '%Y-%m-%d'): v for k, v in self._forecasts.items()}
         except FileNotFoundError:
             print(f"File {file_path} not found, starting with an empty forecast.")
@@ -24,7 +23,6 @@ class WeatherForecast:
         if not self.file_path:
             raise ValueError("File path must be specified to save the forecast.")
 
-        # Convert datetime objects to strings for JSON serialization
         forecasts_to_save = {k.strftime('%Y-%m-%d'): v for k, v in self._forecasts.items()}
 
         with open(self.file_path, 'w') as f:
@@ -47,8 +45,7 @@ class WeatherForecast:
         return self._forecasts.items()
 
     def query_api(self, date):
-        # Here you would add code to query a real API.
-        # We'll simulate it with a mock response.
+
         simulated_response = {
             'temperature': 20,
             'description': 'Clear sky',
@@ -56,11 +53,3 @@ class WeatherForecast:
         }
         self[date] = simulated_response
         return simulated_response
-
-# Przykładowe użycie:
-# weather_forecast = WeatherForecast("weather_data.json")
-# weather_forecast.query_api('2024-09-03')
-# print(weather_forecast['2024-09-03'])
-# for date in weather_forecast:
-#     print(date, weather_forecast[date])
-# weather_forecast.save_to_file("weather_data.json")
