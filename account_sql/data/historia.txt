@@ -1,0 +1,9 @@
+sprzedaż produkt1 10 50
+sprzedaż produkt2 20 30
+zakup banan 10 20
+sprzedaż banan 10 20
+sprzedaż produkt1 10 50
+sprzedaż produkt2 20 30
+zakup banan 10 20
+sprzedaż banan 10 20
+saldo 1500

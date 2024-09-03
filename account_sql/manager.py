@@ -12,40 +12,63 @@ class Manager:
 
     def wykonaj_zakup(self, produkt, cena, ilosc):
         koszt = cena * ilosc
-        if koszt > self.konto:
+        konto = Konto.query.first()
+
+        if konto.saldo < koszt:
             print("Błąd: Brak wystarczających środków na koncie.")
             return
-        if ilosc <= 0 or cena <= 0:
-            print("Błąd: Cena i ilość muszą być dodatnie.")
-            return
-        self.konto -= koszt
-        if produkt in self.magazyn:
-            self.magazyn[produkt]['ilosc'] += ilosc
+
+        produkt_db = Produkt.query.filter_by(nazwa=produkt).first()
+        if produkt_db:
+            produkt_db.ilosc += ilosc
         else:
-            self.magazyn[produkt] = {'cena': cena, 'ilosc': ilosc}
-        self.historia_operacji.append(f"zakup {produkt} {cena} {ilosc}")
-        self.save_magazyn()
-        self.save_konto()
-        self.save_historia()
+            produkt_db = Produkt(nazwa=produkt, cena=cena, ilosc=ilosc)
+            db.session.add(produkt_db)
+
+        konto.saldo -= koszt
+        db.session.add(konto)
+
+        operacja = HistoriaOperacji(typ_operacji='zakup', opis=f'Zakup {ilosc} szt. {produkt} za {koszt} PLN')
+        db.session.add(operacja)
+
+        db.session.commit()
 
     def wykonaj_sprzedaz(self, produkt, ilosc):
-        if produkt not in self.magazyn or self.magazyn[produkt]['ilosc'] < ilosc:
+        produkt_db = Produkt.query.filter_by(nazwa=produkt).first()
+        if not produkt_db or produkt_db.ilosc < ilosc:
             print("Błąd: Brak wystarczającej ilości produktu w magazynie.")
             return
-        self.magazyn[produkt]['ilosc'] -= ilosc
-        self.konto += self.magazyn[produkt]['cena'] * ilosc
-        self.historia_operacji.append(f"sprzedaż {produkt} {self.magazyn[produkt]['cena']} {ilosc}")
-        if self.magazyn[produkt]['ilosc'] == 0:
-            del self.magazyn[produkt]
-        self.save_magazyn()
-        self.save_konto()
-        self.save_historia()
+
+        przychod = produkt_db.cena * ilosc
+        konto = Konto.query.first()
+        konto.saldo += przychod
+
+        produkt_db.ilosc -= ilosc
+        if produkt_db.ilosc == 0:
+            db.session.delete(produkt_db)
+        else:
+            db.session.add(produkt_db)
+
+        db.session.add(konto)
+
+        operacja = HistoriaOperacji(typ_operacji='sprzedaż', opis=f'Sprzedaż {ilosc} szt. {produkt} za {przychod} PLN')
+        db.session.add(operacja)
+
+        db.session.commit()
 
     def wykonaj_saldo(self, kwota):
-        self.konto += kwota
-        self.historia_operacji.append(f"saldo {kwota}")
-        self.save_konto()
-        self.save_historia()
+        konto = Konto.query.first()
+        if not konto:
+            konto = Konto(saldo=0)
+            db.session.add(konto)
+
+        konto.saldo += kwota
+        db.session.add(konto)
+
+        operacja = HistoriaOperacji(typ_operacji='saldo', opis=f'Saldo zmienione o {kwota} PLN')
+        db.session.add(operacja)
+
+        db.session.commit()
 
     def load_konto(self):
         if os.path.exists(self.konto_file):
@@ -96,4 +119,20 @@ class Manager:
     def get_magazyn(self):
         return self.magazyn
 
+    def sprawdz_integralnosc():
+        konto = Konto.query.first()
+        if not konto:
+            print("Brak konta w bazie danych.")
+            return
 
+        historia = HistoriaOperacji.query.all()
+        operacje_saldo = [op for op in historia if op.typ_operacji == 'saldo']
+        suma_saldo = sum(int(op.opis.split(' ')[-2]) for op in operacje_saldo)
+
+        produkty = Produkt.query.all()
+        suma_zakupow = sum(prod.cena * prod.ilosc for prod in produkty)
+
+        if konto.saldo != suma_saldo - suma_zakupow:
+            print("Błąd integralności: Saldo nie zgadza się z historią operacji.")
+        else:
+            print("Dane są zgodne.")
